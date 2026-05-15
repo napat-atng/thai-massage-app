@@ -24,13 +24,20 @@ CREATE TABLE public.users (
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.users (id, email, full_name, avatar_url)
+  INSERT INTO public.users (id, email, full_name, phone, avatar_url)
   VALUES (
     NEW.id,
     NEW.email,
     NEW.raw_user_meta_data->>'full_name',
+    NEW.raw_user_meta_data->>'phone',
     NEW.raw_user_meta_data->>'avatar_url'
-  );
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    full_name = COALESCE(EXCLUDED.full_name, public.users.full_name),
+    phone = COALESCE(EXCLUDED.phone, public.users.phone),
+    avatar_url = COALESCE(EXCLUDED.avatar_url, public.users.avatar_url),
+    updated_at = NOW();
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -166,6 +173,19 @@ AS $$
   SELECT public.current_user_role() IN ('admin', 'staff')
 $$;
 
+CREATE OR REPLACE FUNCTION public.current_staff_id()
+RETURNS UUID
+LANGUAGE SQL
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT id
+  FROM public.staff
+  WHERE user_id = auth.uid()
+  LIMIT 1
+$$;
+
 -- Users: ดูได้เฉพาะตัวเอง, admin ดูได้ทั้งหมด
 CREATE POLICY "Users can view own profile" ON public.users
   FOR SELECT USING (auth.uid() = id);
@@ -190,7 +210,9 @@ CREATE POLICY "Customers view own bookings" ON public.bookings
 CREATE POLICY "Customers create bookings" ON public.bookings
   FOR INSERT WITH CHECK (auth.uid() = customer_id);
 CREATE POLICY "Admin manage all bookings" ON public.bookings
-  FOR ALL USING (public.is_staff_or_admin());
+  FOR ALL USING (public.is_admin());
+CREATE POLICY "Staff can view own bookings" ON public.bookings
+  FOR SELECT USING (staff_id = public.current_staff_id());
 
 -- Transactions: admin เท่านั้น
 CREATE POLICY "Admin manage transactions" ON public.transactions

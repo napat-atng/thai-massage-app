@@ -23,6 +23,7 @@ export default async function HomePage() {
   ])
 
   const isAdmin = profile?.role === 'admin'
+  const isStaff = profile?.role === 'staff' || isAdmin
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-stone-50">
@@ -42,6 +43,11 @@ export default async function HomePage() {
                 {isAdmin ? (
                   <Link href="/admin/dashboard" className="text-sm font-medium text-stone-600 hover:text-primary-600">
                     ผู้ดูแล
+                  </Link>
+                ) : null}
+                {isStaff ? (
+                  <Link href="/staff/schedule" className="text-sm font-medium text-stone-600 hover:text-primary-600">
+                    ตารางนัด
                   </Link>
                 ) : null}
                 <Link href="/book" className="btn-primary text-sm">

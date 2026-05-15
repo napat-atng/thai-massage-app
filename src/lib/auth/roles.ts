@@ -30,3 +30,13 @@ export async function requireAdmin() {
 
   return role
 }
+
+export async function requireStaffOrAdmin() {
+  const role = await getCurrentUserRole()
+
+  if (role !== 'admin' && role !== 'staff') {
+    redirect('/')
+  }
+
+  return role
+}

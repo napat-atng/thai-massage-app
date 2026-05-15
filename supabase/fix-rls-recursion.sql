@@ -33,10 +33,25 @@ AS $$
   SELECT public.current_user_role() IN ('admin', 'staff')
 $$;
 
+CREATE OR REPLACE FUNCTION public.current_staff_id()
+RETURNS UUID
+LANGUAGE SQL
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT id
+  FROM public.staff
+  WHERE user_id = auth.uid()
+  LIMIT 1
+$$;
+
 DROP POLICY IF EXISTS "Admin can view all users" ON public.users;
 DROP POLICY IF EXISTS "Admin can manage services" ON public.services;
 DROP POLICY IF EXISTS "Admin can manage staff" ON public.staff;
 DROP POLICY IF EXISTS "Admin manage all bookings" ON public.bookings;
+DROP POLICY IF EXISTS "Staff can view and update bookings" ON public.bookings;
+DROP POLICY IF EXISTS "Staff can view own bookings" ON public.bookings;
 DROP POLICY IF EXISTS "Admin manage transactions" ON public.transactions;
 
 CREATE POLICY "Admin can view all users" ON public.users
@@ -48,8 +63,11 @@ CREATE POLICY "Admin can manage services" ON public.services
 CREATE POLICY "Admin can manage staff" ON public.staff
   FOR ALL USING (public.is_admin());
 
-CREATE POLICY "Staff can view and update bookings" ON public.bookings
-  FOR ALL USING (public.is_staff_or_admin());
+CREATE POLICY "Admin manage all bookings" ON public.bookings
+  FOR ALL USING (public.is_admin());
+
+CREATE POLICY "Staff can view own bookings" ON public.bookings
+  FOR SELECT USING (staff_id = public.current_staff_id());
 
 CREATE POLICY "Admin manage transactions" ON public.transactions
   FOR ALL USING (public.is_admin());
