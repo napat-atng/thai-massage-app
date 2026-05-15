@@ -132,29 +132,57 @@ ALTER TABLE public.staff_schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 
+-- Helper functions for role checks.
+-- SECURITY DEFINER avoids recursive RLS when policies need to read public.users.
+CREATE OR REPLACE FUNCTION public.current_user_role()
+RETURNS TEXT
+LANGUAGE SQL
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT role
+  FROM public.users
+  WHERE id = auth.uid()
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE SQL
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT public.current_user_role() = 'admin'
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_staff_or_admin()
+RETURNS BOOLEAN
+LANGUAGE SQL
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT public.current_user_role() IN ('admin', 'staff')
+$$;
+
 -- Users: ดูได้เฉพาะตัวเอง, admin ดูได้ทั้งหมด
 CREATE POLICY "Users can view own profile" ON public.users
   FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Admin can view all users" ON public.users
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-  );
+  FOR ALL USING (public.is_admin());
 
 -- Services: ทุกคนดูได้, admin แก้ไขได้
 CREATE POLICY "Anyone can view active services" ON public.services
   FOR SELECT USING (is_active = TRUE);
 CREATE POLICY "Admin can manage services" ON public.services
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-  );
+  FOR ALL USING (public.is_admin());
 
 -- Staff: ทุกคนดูได้, admin แก้ไขได้
 CREATE POLICY "Anyone can view active staff" ON public.staff
   FOR SELECT USING (status = 'active');
 CREATE POLICY "Admin can manage staff" ON public.staff
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-  );
+  FOR ALL USING (public.is_admin());
 
 -- Bookings: ลูกค้าดูได้เฉพาะของตัวเอง, admin/staff ดูได้ทั้งหมด
 CREATE POLICY "Customers view own bookings" ON public.bookings
@@ -162,15 +190,11 @@ CREATE POLICY "Customers view own bookings" ON public.bookings
 CREATE POLICY "Customers create bookings" ON public.bookings
   FOR INSERT WITH CHECK (auth.uid() = customer_id);
 CREATE POLICY "Admin manage all bookings" ON public.bookings
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin','staff'))
-  );
+  FOR ALL USING (public.is_staff_or_admin());
 
 -- Transactions: admin เท่านั้น
 CREATE POLICY "Admin manage transactions" ON public.transactions
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-  );
+  FOR ALL USING (public.is_admin());
 
 -- =============================================
 -- INDEXES (ช่วยให้ query เร็วขึ้น)

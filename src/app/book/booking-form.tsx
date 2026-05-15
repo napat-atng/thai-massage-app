@@ -1,0 +1,197 @@
+'use client'
+
+import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+
+type ServiceOption = {
+  id: string
+  name: string
+  duration_minutes: number
+  price: number
+}
+
+type StaffOption = {
+  id: string
+  name: string
+  nickname: string | null
+}
+
+type BookingFormProps = {
+  userId: string
+  services: ServiceOption[]
+  staff: StaffOption[]
+}
+
+function addMinutesToTime(time: string, minutes: number) {
+  const [hours, mins] = time.split(':').map(Number)
+  const date = new Date()
+  date.setHours(hours, mins + minutes, 0, 0)
+
+  return date.toTimeString().slice(0, 5)
+}
+
+export function BookingForm({ userId, services, staff }: BookingFormProps) {
+  const router = useRouter()
+  const supabase = createClient()
+  const today = new Date().toISOString().slice(0, 10)
+
+  const [serviceId, setServiceId] = useState(services[0]?.id ?? '')
+  const [staffId, setStaffId] = useState(staff[0]?.id ?? '')
+  const [bookingDate, setBookingDate] = useState(today)
+  const [startTime, setStartTime] = useState('10:00')
+  const [note, setNote] = useState('')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const selectedService = useMemo(
+    () => services.find((service) => service.id === serviceId),
+    [serviceId, services]
+  )
+
+  const canSubmit = Boolean(selectedService && bookingDate && startTime)
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (!selectedService || !canSubmit) {
+      return
+    }
+
+    setIsSubmitting(true)
+    setErrorMessage(null)
+
+    const { error } = await supabase.from('bookings').insert({
+      customer_id: userId,
+      service_id: selectedService.id,
+      staff_id: staffId || null,
+      booking_date: bookingDate,
+      start_time: startTime,
+      end_time: addMinutesToTime(startTime, selectedService.duration_minutes),
+      total_price: selectedService.price,
+      note: note.trim() || null,
+    })
+
+    setIsSubmitting(false)
+
+    if (error) {
+      setErrorMessage(error.message)
+      return
+    }
+
+    router.push('/my-bookings')
+    router.refresh()
+  }
+
+  if (services.length === 0) {
+    return (
+      <div className="card">
+        <h2 className="text-lg font-semibold text-stone-800">ยังไม่มีบริการที่เปิดใช้งาน</h2>
+        <p className="mt-2 text-sm text-stone-500">
+          เพิ่มข้อมูลในตาราง services บน Supabase ก่อน จึงจะเริ่มจองได้
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="card space-y-5">
+      <div>
+        <label className="block text-sm font-medium text-stone-700" htmlFor="service">
+          บริการ
+        </label>
+        <select
+          id="service"
+          value={serviceId}
+          onChange={(event) => setServiceId(event.target.value)}
+          className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
+        >
+          {services.map((service) => (
+            <option key={service.id} value={service.id}>
+              {service.name} - {service.duration_minutes} นาที - ฿{Number(service.price).toLocaleString()}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-stone-700" htmlFor="staff">
+          ช่างนวด
+        </label>
+        <select
+          id="staff"
+          value={staffId}
+          onChange={(event) => setStaffId(event.target.value)}
+          className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
+        >
+          {staff.length === 0 ? (
+            <option value="">ให้ร้านจัดช่างให้</option>
+          ) : (
+            staff.map((person) => (
+              <option key={person.id} value={person.id}>
+                {person.name}{person.nickname ? ` (${person.nickname})` : ''}
+              </option>
+            ))
+          )}
+        </select>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="block text-sm font-medium text-stone-700" htmlFor="date">
+            วันที่
+          </label>
+          <input
+            id="date"
+            type="date"
+            min={today}
+            value={bookingDate}
+            onChange={(event) => setBookingDate(event.target.value)}
+            className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-stone-700" htmlFor="time">
+            เวลาเริ่ม
+          </label>
+          <input
+            id="time"
+            type="time"
+            value={startTime}
+            onChange={(event) => setStartTime(event.target.value)}
+            className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-stone-700" htmlFor="note">
+          หมายเหตุ
+        </label>
+        <textarea
+          id="note"
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+          rows={3}
+          className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
+          placeholder="เช่น ต้องการเน้นไหล่และหลัง"
+        />
+      </div>
+
+      {selectedService ? (
+        <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-stone-700">
+          รวม ฿{Number(selectedService.price).toLocaleString()} ใช้เวลา {selectedService.duration_minutes} นาที
+        </div>
+      ) : null}
+
+      {errorMessage ? (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</p>
+      ) : null}
+
+      <button type="submit" disabled={!canSubmit || isSubmitting} className="btn-primary w-full py-3 disabled:cursor-not-allowed disabled:opacity-60">
+        {isSubmitting ? 'กำลังบันทึก...' : 'ยืนยันการจอง'}
+      </button>
+    </form>
+  )
+}
