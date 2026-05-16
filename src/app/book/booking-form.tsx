@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { BUSINESS_HOURS } from '@/lib/constants'
 
 type ServiceOption = {
   id: string
@@ -27,8 +28,12 @@ function addMinutesToTime(time: string, minutes: number) {
   const [hours, mins] = time.split(':').map(Number)
   const date = new Date()
   date.setHours(hours, mins + minutes, 0, 0)
-
   return date.toTimeString().slice(0, 5)
+}
+
+function isWithinBusinessHours(startTime: string, durationMinutes: number): boolean {
+  const endTime = addMinutesToTime(startTime, durationMinutes)
+  return startTime >= BUSINESS_HOURS.open && endTime <= BUSINESS_HOURS.close
 }
 
 export function BookingForm({ userId, services, staff }: BookingFormProps) {
@@ -37,7 +42,7 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
   const today = new Date().toISOString().slice(0, 10)
 
   const [serviceId, setServiceId] = useState(services[0]?.id ?? '')
-  const [staffId, setStaffId] = useState(staff[0]?.id ?? '')
+  const [staffId, setStaffId] = useState('')
   const [bookingDate, setBookingDate] = useState(today)
   const [startTime, setStartTime] = useState('10:00')
   const [note, setNote] = useState('')
@@ -45,21 +50,48 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const selectedService = useMemo(
-    () => services.find((service) => service.id === serviceId),
+    () => services.find((s) => s.id === serviceId),
     [serviceId, services]
   )
 
-  const canSubmit = Boolean(selectedService && bookingDate && startTime)
+  const endTime = selectedService
+    ? addMinutesToTime(startTime, selectedService.duration_minutes)
+    : null
+
+  const businessHoursOk = selectedService
+    ? isWithinBusinessHours(startTime, selectedService.duration_minutes)
+    : true
+
+  const canSubmit = Boolean(selectedService && bookingDate && startTime && businessHoursOk)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-
-    if (!selectedService || !canSubmit) {
-      return
-    }
+    if (!selectedService || !canSubmit) return
 
     setIsSubmitting(true)
     setErrorMessage(null)
+
+    // ตรวจสอบ double-booking: ช่างถูกจองในช่วงเวลานี้ไหม
+    if (staffId) {
+      const calculatedEndTime = addMinutesToTime(startTime, selectedService.duration_minutes)
+      const { data: conflicts } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('staff_id', staffId)
+        .eq('booking_date', bookingDate)
+        .not('status', 'in', '(cancelled)')
+        .or(
+          `and(start_time.lt.${calculatedEndTime},end_time.gt.${startTime})`
+        )
+
+      if (conflicts && conflicts.length > 0) {
+        setErrorMessage(
+          `ช่างนวดคนนี้ไม่ว่างในช่วงเวลา ${startTime}–${calculatedEndTime} น. กรุณาเลือกเวลาหรือช่างอื่น`
+        )
+        setIsSubmitting(false)
+        return
+      }
+    }
 
     const { error } = await supabase.from('bookings').insert({
       customer_id: userId,
@@ -96,6 +128,7 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="card space-y-5">
+      {/* บริการ */}
       <div>
         <label className="block text-sm font-medium text-stone-700" htmlFor="service">
           บริการ
@@ -103,17 +136,18 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
         <select
           id="service"
           value={serviceId}
-          onChange={(event) => setServiceId(event.target.value)}
+          onChange={(e) => setServiceId(e.target.value)}
           className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
         >
-          {services.map((service) => (
-            <option key={service.id} value={service.id}>
-              {service.name} - {service.duration_minutes} นาที - ฿{Number(service.price).toLocaleString()}
+          {services.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name} — {s.duration_minutes} นาที — ฿{Number(s.price).toLocaleString()}
             </option>
           ))}
         </select>
       </div>
 
+      {/* ช่างนวด */}
       <div>
         <label className="block text-sm font-medium text-stone-700" htmlFor="staff">
           ช่างนวด
@@ -121,21 +155,19 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
         <select
           id="staff"
           value={staffId}
-          onChange={(event) => setStaffId(event.target.value)}
+          onChange={(e) => setStaffId(e.target.value)}
           className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
         >
-          {staff.length === 0 ? (
-            <option value="">ให้ร้านจัดช่างให้</option>
-          ) : (
-            staff.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.name}{person.nickname ? ` (${person.nickname})` : ''}
-              </option>
-            ))
-          )}
+          <option value="">ให้ร้านจัดช่างให้</option>
+          {staff.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}{p.nickname ? ` (${p.nickname})` : ''}
+            </option>
+          ))}
         </select>
       </div>
 
+      {/* วันที่ + เวลา */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-stone-700" htmlFor="date">
@@ -146,25 +178,37 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
             type="date"
             min={today}
             value={bookingDate}
-            onChange={(event) => setBookingDate(event.target.value)}
+            onChange={(e) => setBookingDate(e.target.value)}
             className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
           />
         </div>
-
         <div>
           <label className="block text-sm font-medium text-stone-700" htmlFor="time">
-            เวลาเริ่ม
+            เวลาเริ่ม{' '}
+            <span className="font-normal text-stone-400">
+              (เปิด {BUSINESS_HOURS.open}–{BUSINESS_HOURS.close})
+            </span>
           </label>
           <input
             id="time"
             type="time"
+            min={BUSINESS_HOURS.open}
+            max={BUSINESS_HOURS.close}
             value={startTime}
-            onChange={(event) => setStartTime(event.target.value)}
+            onChange={(e) => setStartTime(e.target.value)}
             className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
           />
         </div>
       </div>
 
+      {/* แสดง warning ถ้านอกเวลาทำการ */}
+      {selectedService && !businessHoursOk ? (
+        <p className="rounded-lg bg-orange-50 px-3 py-2 text-sm text-orange-700">
+          ⚠️ เวลาสิ้นสุด {endTime} น. เกินเวลาปิดร้าน {BUSINESS_HOURS.close} น. กรุณาเลือกเวลาเริ่มให้เร็วขึ้น
+        </p>
+      ) : null}
+
+      {/* หมายเหตุ */}
       <div>
         <label className="block text-sm font-medium text-stone-700" htmlFor="note">
           หมายเหตุ
@@ -172,16 +216,18 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
         <textarea
           id="note"
           value={note}
-          onChange={(event) => setNote(event.target.value)}
+          onChange={(e) => setNote(e.target.value)}
           rows={3}
           className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
           placeholder="เช่น ต้องการเน้นไหล่และหลัง"
         />
       </div>
 
+      {/* สรุปราคา */}
       {selectedService ? (
         <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-stone-700">
-          รวม ฿{Number(selectedService.price).toLocaleString()} ใช้เวลา {selectedService.duration_minutes} นาที
+          รวม ฿{Number(selectedService.price).toLocaleString()} · ใช้เวลา {selectedService.duration_minutes} นาที
+          {endTime ? ` · เสร็จ ${endTime} น.` : ''}
         </div>
       ) : null}
 
@@ -189,7 +235,11 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</p>
       ) : null}
 
-      <button type="submit" disabled={!canSubmit || isSubmitting} className="btn-primary w-full py-3 disabled:cursor-not-allowed disabled:opacity-60">
+      <button
+        type="submit"
+        disabled={!canSubmit || isSubmitting}
+        className="btn-primary w-full py-3 disabled:cursor-not-allowed disabled:opacity-60"
+      >
         {isSubmitting ? 'กำลังบันทึก...' : 'ยืนยันการจอง'}
       </button>
     </form>

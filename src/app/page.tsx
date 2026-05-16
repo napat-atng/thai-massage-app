@@ -1,72 +1,23 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { Navbar } from '@/components/ui/Navbar'
 
 export default async function HomePage() {
   const supabase = createClient()
+
+  const { data: services, error: servicesError } = await supabase
+    .from('services')
+    .select('*')
+    .eq('is_active', true)
+    .order('price')
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const [{ data: services, error: servicesError }, { data: profile }] = await Promise.all([
-    supabase
-      .from('services')
-      .select('*')
-      .eq('is_active', true)
-      .order('price'),
-    user
-      ? supabase
-          .from('users')
-          .select('role, full_name')
-          .eq('id', user.id)
-          .single()
-      : Promise.resolve({ data: null }),
-  ])
-
-  const isAdmin = profile?.role === 'admin'
-  const isStaff = profile?.role === 'staff' || isAdmin
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-stone-50">
-      <nav className="sticky top-0 z-50 border-b border-stone-100 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl">🌿</span>
-            <span className="text-lg font-bold text-primary-700">นวดแผนไทย</span>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            {user ? (
-              <>
-                <Link href="/my-bookings" className="text-sm font-medium text-stone-600 hover:text-primary-600">
-                  การจองของฉัน
-                </Link>
-                {isAdmin ? (
-                  <Link href="/admin/dashboard" className="text-sm font-medium text-stone-600 hover:text-primary-600">
-                    ผู้ดูแล
-                  </Link>
-                ) : null}
-                {isStaff ? (
-                  <Link href="/staff/schedule" className="text-sm font-medium text-stone-600 hover:text-primary-600">
-                    ตารางนัด
-                  </Link>
-                ) : null}
-                <Link href="/book" className="btn-primary text-sm">
-                  จองนัดเลย
-                </Link>
-                <form action="/auth/logout" method="post">
-                  <button type="submit" className="btn-secondary text-sm">
-                    ออกจากระบบ
-                  </button>
-                </form>
-              </>
-            ) : (
-              <Link href="/login" className="btn-primary text-sm">
-                เข้าสู่ระบบ
-              </Link>
-            )}
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <section className="mx-auto max-w-5xl px-4 py-20 text-center">
         <h1 className="mb-4 text-4xl font-bold text-stone-800 md:text-5xl">
@@ -115,7 +66,7 @@ export default async function HomePage() {
       </section>
 
       <footer className="py-8 text-center text-sm text-stone-400">
-        © 2024 นวดแผนไทย · สอบถามโทร 02-xxx-xxxx
+        © {new Date().getFullYear()} นวดแผนไทย · เปิดบริการ 09:00–21:00 น. ทุกวัน
       </footer>
     </div>
   )

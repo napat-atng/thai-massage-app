@@ -6,6 +6,7 @@ const adminLinks = [
   { href: '/admin/staff', label: 'หมอนวด' },
   { href: '/admin/services', label: 'บริการ' },
   { href: '/admin/users', label: 'ผู้ใช้' },
+  { href: '/admin/reports', label: 'รายงาน' },
 ]
 
 export function AdminNav() {

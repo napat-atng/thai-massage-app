@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { BookingCard } from '@/components/ui/BookingCard'
+import { cancelBooking } from '@/app/admin/actions'
 
 type BookingRow = {
   id: string
@@ -10,29 +12,8 @@ type BookingRow = {
   status: string
   total_price: number
   note: string | null
-  service: {
-    name: string
-  } | null
-  staff: {
-    name: string
-    nickname: string | null
-  } | null
-}
-
-const statusLabel: Record<string, string> = {
-  pending: 'รอยืนยัน',
-  confirmed: 'ยืนยันแล้ว',
-  in_progress: 'กำลังให้บริการ',
-  completed: 'เสร็จสิ้น',
-  cancelled: 'ยกเลิก',
-}
-
-const badgeClassName: Record<string, string> = {
-  pending: 'badge-pending',
-  confirmed: 'badge-confirmed',
-  in_progress: 'badge-in_progress',
-  completed: 'badge-completed',
-  cancelled: 'badge-cancelled',
+  service: { name: string } | null
+  staff: { name: string; nickname: string | null } | null
 }
 
 export default async function MyBookingsPage() {
@@ -41,20 +22,12 @@ export default async function MyBookingsPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) {
-    redirect('/login')
-  }
+  if (!user) redirect('/login')
 
   const { data: bookings, error } = await supabase
     .from('bookings')
     .select(`
-      id,
-      booking_date,
-      start_time,
-      end_time,
-      status,
-      total_price,
-      note,
+      id, booking_date, start_time, end_time, status, total_price, note,
       service:services(name),
       staff:staff(name, nickname)
     `)
@@ -72,12 +45,8 @@ export default async function MyBookingsPage() {
             <p className="mt-1 text-sm text-stone-500">ดูสถานะและรายละเอียดนัดหมายทั้งหมด</p>
           </div>
           <div className="flex gap-2">
-            <Link href="/" className="btn-secondary text-sm">
-              หน้าแรก
-            </Link>
-            <Link href="/book" className="btn-primary text-sm">
-              จองเพิ่ม
-            </Link>
+            <Link href="/" className="btn-secondary text-sm">หน้าแรก</Link>
+            <Link href="/book" className="btn-primary text-sm">จองเพิ่ม</Link>
           </div>
         </div>
 
@@ -92,44 +61,30 @@ export default async function MyBookingsPage() {
           <div className="card text-center">
             <h2 className="text-lg font-semibold text-stone-800">ยังไม่มีการจอง</h2>
             <p className="mt-2 text-sm text-stone-500">เริ่มจองนัดแรกของคุณได้เลย</p>
-            <Link href="/book" className="btn-primary mt-5 inline-block">
-              จองนัด
-            </Link>
+            <Link href="/book" className="btn-primary mt-5 inline-block">จองนัด</Link>
           </div>
         ) : null}
 
         {!error && bookings && bookings.length > 0 ? (
           <div className="space-y-4">
             {bookings.map((booking) => (
-              <article key={booking.id} className="card">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-lg font-semibold text-stone-800">
-                        {booking.service?.name ?? 'บริการนวด'}
-                      </h2>
-                      <span className={badgeClassName[booking.status] ?? 'badge-pending'}>
-                        {statusLabel[booking.status] ?? booking.status}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm text-stone-500">
-                      {booking.booking_date} เวลา {booking.start_time.slice(0, 5)}-{booking.end_time.slice(0, 5)}
-                    </p>
-                    <p className="mt-1 text-sm text-stone-500">
-                      ช่าง: {booking.staff?.name ?? 'ให้ร้านจัดช่างให้'}
-                      {booking.staff?.nickname ? ` (${booking.staff.nickname})` : ''}
-                    </p>
-                    {booking.note ? (
-                      <p className="mt-2 text-sm text-stone-600">หมายเหตุ: {booking.note}</p>
-                    ) : null}
-                  </div>
-                  <div className="text-left sm:text-right">
-                    <p className="text-lg font-bold text-primary-600">
-                      ฿{Number(booking.total_price).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </article>
+              <BookingCard
+                key={booking.id}
+                booking={booking}
+                actions={
+                  ['pending', 'confirmed'].includes(booking.status) ? (
+                    <form action={cancelBooking}>
+                      <input type="hidden" name="id" value={booking.id} />
+                      <button
+                        type="submit"
+                        className="rounded-lg border border-red-200 px-3 py-1 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                      >
+                        ยกเลิกการจอง
+                      </button>
+                    </form>
+                  ) : null
+                }
+              />
             ))}
           </div>
         ) : null}
