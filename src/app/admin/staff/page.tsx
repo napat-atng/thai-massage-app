@@ -1,8 +1,10 @@
-import { AdminNav } from '@/app/admin/admin-nav'
+﻿import { AdminNav } from '@/app/admin/admin-nav'
 import { deleteStaff, saveStaff } from '@/app/admin/actions'
 import { requireAdmin } from '@/lib/auth/roles'
 import { createClient } from '@/lib/supabase/server'
-import { saveStaffSchedule, DAY_NAMES } from './schedule-actions'
+import { saveStaffSchedule } from './schedule-actions'
+
+const DAY_NAMES = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์']
 
 type StaffRow = {
   id: string
@@ -50,8 +52,8 @@ export default async function AdminStaffPage() {
   }
 
   return (
-    <main className="min-h-screen bg-stone-50">
-      <div className="mx-auto max-w-6xl px-4 py-8">
+    <main className="min-h-screen">
+      <div className="page-shell">
         <h1 className="mb-2 text-2xl font-bold text-stone-800">จัดการหมอนวด</h1>
         <p className="mb-6 text-sm text-stone-500">เพิ่มหมอนวด ตั้งตารางเวลา และจัดการข้อมูล</p>
         <AdminNav />
@@ -182,3 +184,4 @@ export default async function AdminStaffPage() {
     </main>
   )
 }
+

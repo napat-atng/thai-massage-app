@@ -37,12 +37,13 @@ export default async function MyBookingsPage() {
     .returns<BookingRow[]>()
 
   return (
-    <main className="min-h-screen bg-stone-50">
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <div className="mb-6 flex items-center justify-between gap-4">
+    <main className="min-h-screen">
+      <div className="page-shell max-w-5xl">
+        <div className="page-header">
           <div>
-            <h1 className="text-2xl font-bold text-stone-800">การจองของฉัน</h1>
-            <p className="mt-1 text-sm text-stone-500">ดูสถานะและรายละเอียดนัดหมายทั้งหมด</p>
+            <p className="eyebrow">My Bookings</p>
+            <h1 className="mt-2 text-3xl font-bold text-stone-950">การจองของฉัน</h1>
+            <p className="mt-2 text-stone-600">ดูสถานะและรายละเอียดนัดหมายทั้งหมด</p>
           </div>
           <div className="flex gap-2">
             <Link href="/" className="btn-secondary text-sm">หน้าแรก</Link>
@@ -58,7 +59,7 @@ export default async function MyBookingsPage() {
         ) : null}
 
         {!error && bookings?.length === 0 ? (
-          <div className="card text-center">
+          <div className="card py-12 text-center">
             <h2 className="text-lg font-semibold text-stone-800">ยังไม่มีการจอง</h2>
             <p className="mt-2 text-sm text-stone-500">เริ่มจองนัดแรกของคุณได้เลย</p>
             <Link href="/book" className="btn-primary mt-5 inline-block">จองนัด</Link>
@@ -77,7 +78,7 @@ export default async function MyBookingsPage() {
                       <input type="hidden" name="id" value={booking.id} />
                       <button
                         type="submit"
-                        className="rounded-lg border border-red-200 px-3 py-1 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                        className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
                       >
                         ยกเลิกการจอง
                       </button>

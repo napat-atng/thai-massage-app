@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { CalendarDays, Clock3, MessageSquareText, Sparkles, UserRound } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { BUSINESS_HOURS } from '@/lib/constants'
 
@@ -127,121 +128,147 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card space-y-5">
-      {/* บริการ */}
-      <div>
-        <label className="block text-sm font-medium text-stone-700" htmlFor="service">
-          บริการ
-        </label>
-        <select
-          id="service"
-          value={serviceId}
-          onChange={(e) => setServiceId(e.target.value)}
-          className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
-        >
-          {services.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name} — {s.duration_minutes} นาที — ฿{Number(s.price).toLocaleString()}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* ช่างนวด */}
-      <div>
-        <label className="block text-sm font-medium text-stone-700" htmlFor="staff">
-          ช่างนวด
-        </label>
-        <select
-          id="staff"
-          value={staffId}
-          onChange={(e) => setStaffId(e.target.value)}
-          className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
-        >
-          <option value="">ให้ร้านจัดช่างให้</option>
-          {staff.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}{p.nickname ? ` (${p.nickname})` : ''}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* วันที่ + เวลา */}
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="card space-y-5">
         <div>
-          <label className="block text-sm font-medium text-stone-700" htmlFor="date">
-            วันที่
+          <label className="flex items-center gap-2 text-sm font-semibold text-stone-800" htmlFor="service">
+            <Sparkles className="h-4 w-4 text-primary-700" aria-hidden="true" />
+            บริการ
           </label>
-          <input
-            id="date"
-            type="date"
-            min={today}
-            value={bookingDate}
-            onChange={(e) => setBookingDate(e.target.value)}
-            className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
+          <select
+            id="service"
+            value={serviceId}
+            onChange={(e) => setServiceId(e.target.value)}
+            className="form-field mt-2"
+          >
+            {services.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} - {s.duration_minutes} นาที - ฿{Number(s.price).toLocaleString()}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="flex items-center gap-2 text-sm font-semibold text-stone-800" htmlFor="staff">
+            <UserRound className="h-4 w-4 text-primary-700" aria-hidden="true" />
+            ช่างนวด
+          </label>
+          <select
+            id="staff"
+            value={staffId}
+            onChange={(e) => setStaffId(e.target.value)}
+            className="form-field mt-2"
+          >
+            <option value="">ให้ร้านจัดช่างให้</option>
+            {staff.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}{p.nickname ? ` (${p.nickname})` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="flex items-center gap-2 text-sm font-semibold text-stone-800" htmlFor="date">
+              <CalendarDays className="h-4 w-4 text-primary-700" aria-hidden="true" />
+              วันที่
+            </label>
+            <input
+              id="date"
+              type="date"
+              min={today}
+              value={bookingDate}
+              onChange={(e) => setBookingDate(e.target.value)}
+              className="form-field mt-2"
+            />
+          </div>
+          <div>
+            <label className="flex items-center gap-2 text-sm font-semibold text-stone-800" htmlFor="time">
+              <Clock3 className="h-4 w-4 text-primary-700" aria-hidden="true" />
+              เวลาเริ่ม
+            </label>
+            <input
+              id="time"
+              type="time"
+              min={BUSINESS_HOURS.open}
+              max={BUSINESS_HOURS.close}
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="form-field mt-2"
+            />
+            <p className="mt-1 text-xs text-stone-500">
+              เปิด {BUSINESS_HOURS.open}-{BUSINESS_HOURS.close} น.
+            </p>
+          </div>
+        </div>
+
+        {selectedService && !businessHoursOk ? (
+          <p className="rounded-lg bg-orange-50 px-3 py-2 text-sm font-medium text-orange-800 ring-1 ring-orange-100">
+            เวลาสิ้นสุด {endTime} น. เกินเวลาปิดร้าน {BUSINESS_HOURS.close} น. กรุณาเลือกเวลาเริ่มให้เร็วขึ้น
+          </p>
+        ) : null}
+
+        <div>
+          <label className="flex items-center gap-2 text-sm font-semibold text-stone-800" htmlFor="note">
+            <MessageSquareText className="h-4 w-4 text-primary-700" aria-hidden="true" />
+            หมายเหตุ
+          </label>
+          <textarea
+            id="note"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={4}
+            className="form-field mt-2"
+            placeholder="เช่น ต้องการเน้นไหล่และหลัง"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-stone-700" htmlFor="time">
-            เวลาเริ่ม{' '}
-            <span className="font-normal text-stone-400">
-              (เปิด {BUSINESS_HOURS.open}–{BUSINESS_HOURS.close})
-            </span>
-          </label>
-          <input
-            id="time"
-            type="time"
-            min={BUSINESS_HOURS.open}
-            max={BUSINESS_HOURS.close}
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
-          />
-        </div>
+
+        {errorMessage ? (
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 ring-1 ring-red-100">
+            {errorMessage}
+          </p>
+        ) : null}
       </div>
 
-      {/* แสดง warning ถ้านอกเวลาทำการ */}
-      {selectedService && !businessHoursOk ? (
-        <p className="rounded-lg bg-orange-50 px-3 py-2 text-sm text-orange-700">
-          ⚠️ เวลาสิ้นสุด {endTime} น. เกินเวลาปิดร้าน {BUSINESS_HOURS.close} น. กรุณาเลือกเวลาเริ่มให้เร็วขึ้น
-        </p>
-      ) : null}
+      <aside className="card h-fit lg:sticky lg:top-24">
+        <p className="eyebrow">Summary</p>
+        <h2 className="mt-2 text-xl font-bold text-stone-950">สรุปการจอง</h2>
 
-      {/* หมายเหตุ */}
-      <div>
-        <label className="block text-sm font-medium text-stone-700" htmlFor="note">
-          หมายเหตุ
-        </label>
-        <textarea
-          id="note"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          rows={3}
-          className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
-          placeholder="เช่น ต้องการเน้นไหล่และหลัง"
-        />
-      </div>
+        {selectedService ? (
+          <div className="mt-5 space-y-4">
+            <div className="soft-panel">
+              <p className="text-sm text-stone-600">บริการ</p>
+              <p className="mt-1 font-bold text-stone-950">{selectedService.name}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="rounded-lg bg-stone-50 p-3">
+                <p className="text-stone-500">เวลา</p>
+                <p className="mt-1 font-semibold text-stone-900">{selectedService.duration_minutes} นาที</p>
+              </div>
+              <div className="rounded-lg bg-stone-50 p-3">
+                <p className="text-stone-500">เสร็จ</p>
+                <p className="mt-1 font-semibold text-stone-900">{endTime ?? '-'}</p>
+              </div>
+            </div>
+            <div className="flex items-end justify-between border-t border-stone-100 pt-4">
+              <span className="text-sm text-stone-500">รวมทั้งหมด</span>
+              <span className="text-2xl font-bold text-primary-700">
+                ฿{Number(selectedService.price).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        ) : null}
 
-      {/* สรุปราคา */}
-      {selectedService ? (
-        <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-stone-700">
-          รวม ฿{Number(selectedService.price).toLocaleString()} · ใช้เวลา {selectedService.duration_minutes} นาที
-          {endTime ? ` · เสร็จ ${endTime} น.` : ''}
-        </div>
-      ) : null}
-
-      {errorMessage ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</p>
-      ) : null}
-
-      <button
-        type="submit"
-        disabled={!canSubmit || isSubmitting}
-        className="btn-primary w-full py-3 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isSubmitting ? 'กำลังบันทึก...' : 'ยืนยันการจอง'}
-      </button>
+        <button
+          type="submit"
+          disabled={!canSubmit || isSubmitting}
+          className="btn-primary mt-6 w-full py-3 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isSubmitting ? 'กำลังบันทึก...' : 'ยืนยันการจอง'}
+        </button>
+      </aside>
     </form>
   )
 }

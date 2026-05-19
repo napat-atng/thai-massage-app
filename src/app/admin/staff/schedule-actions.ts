@@ -3,18 +3,13 @@
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/lib/auth/roles'
 import { createClient } from '@/lib/supabase/server'
-import type { ActionResult } from '@/app/admin/actions'
 
-const DAY_NAMES = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์']
-
-export { DAY_NAMES }
-
-export async function saveStaffSchedule(formData: FormData): Promise<ActionResult> {
+export async function saveStaffSchedule(formData: FormData): Promise<void> {
   await requireAdmin()
   const supabase = createClient()
 
   const staff_id = formData.get('staff_id') as string
-  if (!staff_id) return { success: false, error: 'ไม่พบ staff_id' }
+  if (!staff_id) return
 
   // ลบตารางเดิมของ staff คนนี้ก่อน
   await supabase.from('staff_schedules').delete().eq('staff_id', staff_id)
@@ -33,9 +28,8 @@ export async function saveStaffSchedule(formData: FormData): Promise<ActionResul
 
   if (rows.length > 0) {
     const { error } = await supabase.from('staff_schedules').insert(rows)
-    if (error) return { success: false, error: error.message }
+    if (error) return
   }
 
   revalidatePath('/admin/staff')
-  return { success: true }
 }

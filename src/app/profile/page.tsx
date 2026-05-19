@@ -24,33 +24,40 @@ export default async function ProfilePage() {
   }
 
   return (
-    <main className="min-h-screen bg-stone-50">
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        <div className="mb-6 flex items-center justify-between gap-4">
+    <main className="min-h-screen">
+      <div className="page-shell max-w-3xl">
+        <div className="page-header">
           <div>
-            <h1 className="text-2xl font-bold text-stone-800">โปรไฟล์ของฉัน</h1>
-            <p className="mt-1 text-sm text-stone-500">แก้ไขชื่อและเบอร์โทรศัพท์</p>
+            <p className="eyebrow">Profile</p>
+            <h1 className="mt-2 text-3xl font-bold text-stone-950">โปรไฟล์ของฉัน</h1>
+            <p className="mt-2 text-stone-600">แก้ไขชื่อและเบอร์โทรศัพท์</p>
           </div>
           <Link href="/" className="btn-secondary text-sm">หน้าแรก</Link>
         </div>
 
-        <div className="card mb-4">
-          <p className="text-sm text-stone-500">อีเมล</p>
-          <p className="mt-1 font-medium text-stone-800">{profile?.email ?? user.email}</p>
-          <p className="mt-3 text-sm text-stone-500">สิทธิ์</p>
-          <p className="mt-1 font-medium text-stone-800">
-            {roleLabel[profile?.role ?? 'customer'] ?? profile?.role}
-          </p>
-          <p className="mt-3 text-sm text-stone-500">สมาชิกตั้งแต่</p>
-          <p className="mt-1 font-medium text-stone-800">
-            {profile?.created_at
-              ? new Date(profile.created_at).toLocaleDateString('th-TH', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })
-              : '-'}
-          </p>
+        <div className="card mb-4 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-lg bg-stone-50 p-4">
+            <p className="text-sm text-stone-500">อีเมล</p>
+            <p className="mt-1 break-words font-semibold text-stone-900">{profile?.email ?? user.email}</p>
+          </div>
+          <div className="rounded-lg bg-stone-50 p-4">
+            <p className="text-sm text-stone-500">สิทธิ์</p>
+            <p className="mt-1 font-semibold text-stone-900">
+              {roleLabel[profile?.role ?? 'customer'] ?? profile?.role}
+            </p>
+          </div>
+          <div className="rounded-lg bg-stone-50 p-4">
+            <p className="text-sm text-stone-500">สมาชิกตั้งแต่</p>
+            <p className="mt-1 font-semibold text-stone-900">
+              {profile?.created_at
+                ? new Date(profile.created_at).toLocaleDateString('th-TH', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })
+                : '-'}
+            </p>
+          </div>
         </div>
 
         <form action={updateProfile} className="card space-y-4">
@@ -63,7 +70,7 @@ export default async function ProfilePage() {
               name="full_name"
               defaultValue={profile?.full_name ?? ''}
               placeholder="ชื่อ นามสกุล"
-              className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
+              className="form-field mt-2"
             />
           </div>
           <div>
@@ -76,10 +83,10 @@ export default async function ProfilePage() {
               type="tel"
               defaultValue={profile?.phone ?? ''}
               placeholder="0812345678"
-              className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-800 outline-none focus:border-primary-500"
+              className="form-field mt-2"
             />
           </div>
-          <button type="submit" className="btn-primary w-full">
+          <button type="submit" className="btn-primary w-full py-3">
             บันทึกการเปลี่ยนแปลง
           </button>
         </form>

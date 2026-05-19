@@ -1,4 +1,4 @@
-import { AdminNav } from '@/app/admin/admin-nav'
+﻿import { AdminNav } from '@/app/admin/admin-nav'
 import { requireAdmin } from '@/lib/auth/roles'
 import { createClient } from '@/lib/supabase/server'
 import { RevenueChart } from './revenue-chart'
@@ -83,8 +83,8 @@ export default async function AdminReportsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-stone-50">
-      <div className="mx-auto max-w-6xl px-4 py-8">
+    <main className="min-h-screen">
+      <div className="page-shell">
         <h1 className="mb-2 text-2xl font-bold text-stone-800">รายงาน & สถิติ</h1>
         <p className="mb-6 text-sm text-stone-500">ข้อมูลรายได้และการจอง</p>
         <AdminNav />
@@ -146,3 +146,4 @@ export default async function AdminReportsPage() {
     </main>
   )
 }
+

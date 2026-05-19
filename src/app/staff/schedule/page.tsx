@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { requireStaffOrAdmin } from '@/lib/auth/roles'
 import { createClient } from '@/lib/supabase/server'
@@ -50,8 +50,8 @@ export default async function StaffSchedulePage() {
     : { data: null, error: null }
 
   return (
-    <main className="min-h-screen bg-stone-50">
-      <div className="mx-auto max-w-5xl px-4 py-8">
+    <main className="min-h-screen">
+      <div className="page-shell max-w-5xl">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-stone-800">ตารางนัดหมอนวด</h1>
@@ -95,3 +95,4 @@ export default async function StaffSchedulePage() {
     </main>
   )
 }
+

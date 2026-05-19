@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Leaf, LockKeyhole, Mail, Phone, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 type AuthMode = 'login' | 'signup'
@@ -138,14 +139,27 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <div className="mx-auto grid min-h-screen max-w-5xl items-center gap-8 px-4 py-10 lg:grid-cols-[1.1fr_0.9fr]">
+    <div className="min-h-screen">
+      <div className="mx-auto grid min-h-screen max-w-6xl items-center gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
         <section>
-          <div className="mb-4 text-5xl">🌿</div>
-          <h1 className="text-4xl font-bold text-stone-800">เข้าสู่ระบบนวดแผนไทย</h1>
-          <p className="mt-3 max-w-lg text-stone-500">
-            เลือกเข้าสู่ระบบได้ 2 แบบ: บัญชีสมาชิกด้วยอีเมลและรหัสผ่าน หรือ Google OAuth
+          <div className="mb-6 grid h-14 w-14 place-items-center rounded-lg bg-primary-100 text-primary-800 ring-1 ring-primary-200">
+            <Leaf className="h-7 w-7" aria-hidden="true" />
+          </div>
+          <p className="eyebrow">Welcome Back</p>
+          <h1 className="mt-3 max-w-xl text-4xl font-bold leading-tight text-stone-950">เข้าสู่ระบบนวดแผนไทย</h1>
+          <p className="mt-4 max-w-lg leading-7 text-stone-600">
+            เข้าสู่ระบบเพื่อจองนัด ติดตามสถานะ และจัดการโปรไฟล์ของคุณในที่เดียว
           </p>
+          <div className="mt-8 grid max-w-lg gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-white bg-white/80 p-4 shadow-sm">
+              <ShieldCheck className="h-5 w-5 text-primary-700" aria-hidden="true" />
+              <p className="mt-2 text-sm font-semibold text-stone-900">ข้อมูลปลอดภัย</p>
+            </div>
+            <div className="rounded-lg border border-white bg-white/80 p-4 shadow-sm">
+              <LockKeyhole className="h-5 w-5 text-primary-700" aria-hidden="true" />
+              <p className="mt-2 text-sm font-semibold text-stone-900">เข้าใช้งานรวดเร็ว</p>
+            </div>
+          </div>
         </section>
 
         <div className="space-y-4">
@@ -181,31 +195,37 @@ export default function LoginPage() {
                 <label className="block text-sm font-medium text-stone-700" htmlFor="email">
                   อีเมล
                 </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                  className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 outline-none focus:border-primary-500"
-                  placeholder="you@example.com"
-                />
+                <div className="relative mt-1">
+                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" aria-hidden="true" />
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    required
+                    className="form-field pl-9"
+                    placeholder="you@example.com"
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-stone-700" htmlFor="password">
                   รหัสผ่าน
                 </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                  minLength={6}
-                  className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 outline-none focus:border-primary-500"
-                  placeholder="อย่างน้อย 6 ตัวอักษร"
-                />
+                <div className="relative mt-1">
+                  <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" aria-hidden="true" />
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    required
+                    minLength={6}
+                    className="form-field pl-9"
+                    placeholder="อย่างน้อย 6 ตัวอักษร"
+                  />
+                </div>
               </div>
 
               {mode === 'signup' ? (
@@ -213,14 +233,17 @@ export default function LoginPage() {
                   <label className="block text-sm font-medium text-stone-700" htmlFor="phone">
                     เบอร์โทร
                   </label>
-                  <input
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
-                    className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 outline-none focus:border-primary-500"
-                    placeholder="08x-xxx-xxxx"
-                  />
+                  <div className="relative mt-1">
+                    <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" aria-hidden="true" />
+                    <input
+                      id="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(event) => setPhone(event.target.value)}
+                      className="form-field pl-9"
+                      placeholder="08x-xxx-xxxx"
+                    />
+                  </div>
                 </div>
               ) : null}
 

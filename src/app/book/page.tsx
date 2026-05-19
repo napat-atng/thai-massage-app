@@ -27,12 +27,13 @@ export default async function BookPage() {
   ])
 
   return (
-    <main className="min-h-screen bg-stone-50">
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-6 flex items-center justify-between gap-4">
+    <main className="min-h-screen">
+      <div className="page-shell max-w-5xl">
+        <div className="page-header">
           <div>
-            <h1 className="text-2xl font-bold text-stone-800">จองนัดนวด</h1>
-            <p className="mt-1 text-sm text-stone-500">เลือกบริการ วันที่ และเวลาที่สะดวก</p>
+            <p className="eyebrow">Booking</p>
+            <h1 className="mt-2 text-3xl font-bold text-stone-950">จองนัดนวด</h1>
+            <p className="mt-2 text-stone-600">เลือกบริการ วันที่ และเวลาที่สะดวก</p>
           </div>
           <Link href="/" className="btn-secondary text-sm">
             กลับหน้าแรก
