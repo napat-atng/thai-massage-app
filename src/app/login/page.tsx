@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Leaf, LockKeyhole, Mail, Phone, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import Swal from 'sweetalert2'
 
 type AuthMode = 'login' | 'signup'
 
@@ -83,17 +84,21 @@ export default function LoginPage() {
       setIsLoading(false)
 
       if (error) {
-        setErrorMessage(getFriendlyAuthError(error.message))
+        const message = getFriendlyAuthError(error.message)
+        setErrorMessage(message)
+        await Swal.fire({ icon: 'error', title: 'สมัครสมาชิกไม่สำเร็จ', text: message })
         return
       }
 
       if (data.session) {
+        await Swal.fire({ icon: 'success', title: 'สมัครสมาชิกสำเร็จ', timer: 1600, showConfirmButton: false })
         router.push('/')
         router.refresh()
         return
       }
 
       setMessage('สมัครสมาชิกสำเร็จ แต่ Supabase ยังเปิดการยืนยันอีเมลอยู่ กรุณาปิด Confirm email เพื่อให้เข้าใช้ได้ทันที')
+      await Swal.fire({ icon: 'success', title: 'สมัครสมาชิกสำเร็จ', text: 'กรุณาตรวจสอบอีเมลเพื่อยืนยันบัญชี' })
       setMode('login')
       setPassword('')
       return
@@ -107,10 +112,13 @@ export default function LoginPage() {
     setIsLoading(false)
 
     if (error) {
-      setErrorMessage(getFriendlyAuthError(error.message))
+      const message = getFriendlyAuthError(error.message)
+      setErrorMessage(message)
+      await Swal.fire({ icon: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', text: message })
       return
     }
 
+    await Swal.fire({ icon: 'success', title: 'เข้าสู่ระบบสำเร็จ', timer: 1200, showConfirmButton: false })
     router.push('/')
     router.refresh()
   }

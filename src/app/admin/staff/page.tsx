@@ -3,6 +3,7 @@ import { deleteStaff, saveStaff } from '@/app/admin/actions'
 import { requireAdmin } from '@/lib/auth/roles'
 import { createClient } from '@/lib/supabase/server'
 import { saveStaffSchedule } from './schedule-actions'
+import { MutationForm } from '@/components/ui/MutationForm'
 
 const DAY_NAMES = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์']
 
@@ -56,10 +57,10 @@ export default async function AdminStaffPage() {
       <div className="page-shell">
         <h1 className="mb-2 text-2xl font-bold text-stone-800">จัดการหมอนวด</h1>
         <p className="mb-6 text-sm text-stone-500">เพิ่มหมอนวด ตั้งตารางเวลา และจัดการข้อมูล</p>
-        <AdminNav />
+
 
         {/* ฟอร์มเพิ่มหมอนวดใหม่ */}
-        <form action={saveStaff} className="card mb-6 grid gap-3 lg:grid-cols-2">
+        <MutationForm action={saveStaff} successMessage="เพิ่มหมอนวดแล้ว" className="card mb-6 grid gap-3 lg:grid-cols-2">
           <h2 className="text-base font-semibold text-stone-800 lg:col-span-2">เพิ่มหมอนวดใหม่</h2>
           <div>
             <label className="text-sm font-medium text-stone-700">ผูกกับผู้ใช้</label>
@@ -96,7 +97,7 @@ export default async function AdminStaffPage() {
             </select>
           </div>
           <button type="submit" className="btn-primary lg:col-span-2">เพิ่มหมอนวด</button>
-        </form>
+        </MutationForm>
 
         {error ? <div className="card text-red-700 mb-4">{error.message}</div> : null}
 
@@ -105,7 +106,7 @@ export default async function AdminStaffPage() {
           {staff?.map((person) => (
             <article key={person.id} className="card space-y-4">
               {/* ข้อมูลพื้นฐาน */}
-              <form action={saveStaff} className="grid gap-3 lg:grid-cols-3">
+              <MutationForm action={saveStaff} successMessage="แก้ไขข้อมูลหมอนวดแล้ว" className="grid gap-3 lg:grid-cols-3">
                 <input type="hidden" name="id" value={person.id} />
                 <h2 className="text-base font-semibold text-stone-800 lg:col-span-3">
                   {person.name}{person.nickname ? ` (${person.nickname})` : ''}
@@ -129,10 +130,10 @@ export default async function AdminStaffPage() {
                 <div className="flex gap-2 lg:col-span-3">
                   <button type="submit" className="btn-primary text-sm">บันทึกข้อมูล</button>
                 </div>
-              </form>
+              </MutationForm>
 
               {/* ตารางเวลา */}
-              <form action={saveStaffSchedule} className="border-t border-stone-100 pt-4">
+              <MutationForm action={saveStaffSchedule} successMessage="บันทึกตารางเวลาทำงานแล้ว" className="border-t border-stone-100 pt-4">
                 <input type="hidden" name="staff_id" value={person.id} />
                 <h3 className="mb-3 text-sm font-semibold text-stone-700">ตารางเวลาทำงาน</h3>
                 <div className="grid gap-2">
@@ -168,15 +169,15 @@ export default async function AdminStaffPage() {
                 <button type="submit" className="mt-3 rounded-lg bg-stone-700 px-4 py-2 text-sm font-medium text-white hover:bg-stone-800">
                   บันทึกตารางเวลา
                 </button>
-              </form>
+              </MutationForm>
 
               {/* ลบ */}
-              <form action={deleteStaff} className="border-t border-stone-100 pt-3">
+              <MutationForm action={deleteStaff} successMessage="ลบหมอนวดแล้ว" confirmMessage="ต้องการลบหมอนวดคนนี้ใช่หรือไม่?" className="border-t border-stone-100 pt-3">
                 <input type="hidden" name="id" value={person.id} />
                 <button type="submit" className="text-sm font-medium text-red-600 hover:underline">
                   ลบหมอนวดออกจากระบบ
                 </button>
-              </form>
+              </MutationForm>
             </article>
           ))}
         </div>

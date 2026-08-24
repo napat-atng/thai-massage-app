@@ -21,7 +21,7 @@ export default async function HomePage() {
     <div className="min-h-screen">
       <Navbar />
 
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <section className="page-shell grid items-center gap-10 py-10 lg:grid-cols-[1.05fr_0.95fr] lg:py-14">
           <div>
             <p className="eyebrow">Thai Massage Booking</p>
@@ -42,7 +42,7 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            <div className="mt-8 grid gap-3 sm:grid-cols-3" aria-label="Booking benefits">
               {[
                 { icon: CalendarCheck, label: 'จองออนไลน์', detail: 'ไม่ต้องโทรถามคิว' },
                 { icon: Clock3, label: '09:00-21:00', detail: 'เปิดบริการทุกวัน' },
@@ -50,7 +50,7 @@ export default async function HomePage() {
               ].map((item) => {
                 const Icon = item.icon
                 return (
-                  <div key={item.label} className="rounded-lg border border-white/80 bg-white/80 p-4 shadow-sm">
+                  <div key={item.label} className="rounded-xl border border-white/80 bg-white/80 p-4 shadow-sm">
                     <Icon className="h-5 w-5 text-primary-700" aria-hidden="true" />
                     <p className="mt-3 font-semibold text-stone-900">{item.label}</p>
                     <p className="mt-1 text-sm text-stone-500">{item.detail}</p>
@@ -60,7 +60,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-lg border border-stone-200 bg-stone-100 shadow-xl shadow-stone-300/40">
+          <div className="relative overflow-hidden rounded-2xl border border-stone-200 bg-stone-100 shadow-xl shadow-stone-300/40">
             <Image
               src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=1100&q=80"
               alt="บรรยากาศการนวดเพื่อผ่อนคลายในสปา"
@@ -69,7 +69,7 @@ export default async function HomePage() {
               priority
               className="h-[420px] w-full object-cover"
             />
-            <div className="absolute inset-x-4 bottom-4 rounded-lg border border-white/70 bg-white/90 p-4 shadow-lg backdrop-blur">
+            <div className="absolute inset-x-4 bottom-4 rounded-xl border border-white/70 bg-white/90 p-4 shadow-lg backdrop-blur">
               <p className="text-sm font-semibold text-stone-900">วันนี้พร้อมดูแลคุณ</p>
               <p className="mt-1 text-sm text-stone-600">เลือกบริการที่เหมาะกับร่างกาย แล้วให้ร้านช่วยจัดเวลาที่ลงตัว</p>
             </div>

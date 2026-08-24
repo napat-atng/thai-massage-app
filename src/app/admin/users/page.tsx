@@ -2,6 +2,7 @@
 import { updateUserRole } from '@/app/admin/actions'
 import { requireAdmin } from '@/lib/auth/roles'
 import { createClient } from '@/lib/supabase/server'
+import { MutationForm } from '@/components/ui/MutationForm'
 
 const roles = ['customer', 'staff', 'admin']
 
@@ -19,7 +20,7 @@ export default async function AdminUsersPage() {
       <div className="page-shell">
         <h1 className="mb-2 text-2xl font-bold text-stone-800">จัดการผู้ใช้และ role</h1>
         <p className="mb-6 text-sm text-stone-500">หมอนวดสมัครสมาชิกก่อน จากนั้น admin เปลี่ยน role เป็น staff ได้ที่นี่</p>
-        <AdminNav />
+
 
         {error ? <div className="card text-red-700">{error.message}</div> : null}
 
@@ -32,7 +33,7 @@ export default async function AdminUsersPage() {
                   <p className="mt-1 text-sm text-stone-500">{user.email}</p>
                   <p className="mt-1 text-sm text-stone-500">โทร: {user.phone || '-'}</p>
                 </div>
-                <form action={updateUserRole} className="flex gap-2">
+                <MutationForm action={updateUserRole} successMessage="บันทึกสิทธิ์ผู้ใช้แล้ว" className="flex gap-2">
                   <input type="hidden" name="user_id" value={user.id} />
                   <select name="role" defaultValue={user.role} className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm">
                     {roles.map((role) => (
@@ -44,7 +45,7 @@ export default async function AdminUsersPage() {
                   <button type="submit" className="btn-primary text-sm">
                     บันทึก
                   </button>
-                </form>
+                </MutationForm>
               </div>
             </article>
           ))}

@@ -17,6 +17,7 @@ export async function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 border-b border-stone-200 bg-white/90 backdrop-blur-xl">
+      <a href="#main-content" className="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         <Link href="/" className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary-100 text-primary-800 ring-1 ring-primary-200">
@@ -28,7 +29,7 @@ export async function Navbar() {
           </span>
         </Link>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2" aria-label="Primary navigation">
           {user ? (
             <>
               <Link href="/my-bookings" className="btn-secondary px-3 py-2 text-sm">

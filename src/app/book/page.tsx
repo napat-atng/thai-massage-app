@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { BookingForm } from './booking-form'
+import { Navbar } from '@/components/ui/Navbar'
 
 export default async function BookPage() {
   const supabase = createClient()
@@ -27,7 +28,9 @@ export default async function BookPage() {
   ])
 
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen">
+      <Navbar />
+      <main id="main-content" tabIndex={-1}>
       <div className="page-shell max-w-5xl">
         <div className="page-header">
           <div>
@@ -46,6 +49,7 @@ export default async function BookPage() {
           staff={staff ?? []}
         />
       </div>
-    </main>
+      </main>
+    </div>
   )
 }

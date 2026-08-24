@@ -1,5 +1,7 @@
+'use client'
+
 import Link from 'next/link'
-import { headers } from 'next/headers'
+import { usePathname } from 'next/navigation'
 import {
   BarChart3,
   CalendarDays,
@@ -23,12 +25,10 @@ const navItems = [
 ]
 
 export function AdminSidebar() {
-  // Get current pathname on server via headers (x-pathname set in middleware or layout)
-  const headersList = headers()
-  const pathname = headersList.get('x-pathname') ?? ''
+  const pathname = usePathname()
 
   return (
-    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-stone-200 bg-white">
+    <aside className="flex w-full shrink-0 flex-col border-b border-stone-200 bg-white md:sticky md:top-0 md:h-screen md:w-64 md:border-b-0 md:border-r">
       {/* Brand */}
       <div className="flex h-16 items-center gap-3 border-b border-stone-200 px-5">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-100 text-primary-800 ring-1 ring-primary-200">
@@ -41,25 +41,26 @@ export function AdminSidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
+      <nav className="flex flex-1 gap-1 overflow-x-auto px-3 py-3 md:flex-col md:overflow-y-auto md:py-4" aria-label="Admin navigation">
         <p className="mb-1 px-2 text-[10px] font-bold uppercase tracking-widest text-stone-400">
           เมนูหลัก
         </p>
         {navItems.map((item) => {
           const Icon = item.icon
-          const isActive = pathname.startsWith(item.href)
+          const isActive = pathname === item.href
           return (
             <Link
               key={item.href}
               href={item.href}
               className={clsx(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                'flex min-h-11 shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-4 focus:ring-primary-200',
                 isActive
-                  ? 'bg-primary-50 text-primary-800 ring-1 ring-primary-200'
-                  : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900',
+                  ? 'bg-primary-700 text-white shadow-md shadow-primary-900/20'
+                  : 'text-stone-600 hover:bg-primary-50 hover:text-primary-800',
               )}
+              aria-current={isActive ? 'page' : undefined}
             >
-              <Icon className={clsx('h-4 w-4 shrink-0', isActive ? 'text-primary-700' : 'text-stone-400')} aria-hidden="true" />
+              <Icon className={clsx('h-4 w-4 shrink-0', isActive ? 'text-white' : 'text-stone-400')} aria-hidden="true" />
               {item.label}
             </Link>
           )
@@ -67,7 +68,7 @@ export function AdminSidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="flex flex-col gap-1 border-t border-stone-200 px-3 py-3">
+      <div className="hidden flex-col gap-1 border-t border-stone-200 px-3 py-3 md:flex">
         <Link
           href="/"
           className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 hover:text-stone-900"

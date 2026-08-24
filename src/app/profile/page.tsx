@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { updateProfile } from '@/app/admin/actions'
+import { Navbar } from '@/components/ui/Navbar'
+import { MutationForm } from '@/components/ui/MutationForm'
 
 export default async function ProfilePage() {
   const supabase = createClient()
@@ -24,7 +26,9 @@ export default async function ProfilePage() {
   }
 
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen">
+      <Navbar />
+      <main id="main-content" tabIndex={-1}>
       <div className="page-shell max-w-3xl">
         <div className="page-header">
           <div>
@@ -60,7 +64,7 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        <form action={updateProfile} className="card space-y-4">
+        <MutationForm action={updateProfile} successMessage="บันทึกโปรไฟล์แล้ว" className="card space-y-4">
           <div>
             <label className="block text-sm font-medium text-stone-700" htmlFor="full_name">
               ชื่อ-นามสกุล
@@ -89,7 +93,7 @@ export default async function ProfilePage() {
           <button type="submit" className="btn-primary w-full py-3">
             บันทึกการเปลี่ยนแปลง
           </button>
-        </form>
+        </MutationForm>
 
         <div className="mt-4 text-center">
           <Link href="/my-bookings" className="text-sm text-primary-600 hover:underline">
@@ -97,6 +101,7 @@ export default async function ProfilePage() {
           </Link>
         </div>
       </div>
-    </main>
+      </main>
+    </div>
   )
 }

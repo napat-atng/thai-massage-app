@@ -34,7 +34,7 @@ export default async function AdminDashboardPage() {
       <div className="page-shell">
         <h1 className="mb-2 text-2xl font-bold text-stone-800">แดชบอร์ดผู้ดูแล</h1>
         <p className="mb-6 text-sm text-stone-500">จัดการข้อมูลหลังบ้านและสถานะการจอง</p>
-        <AdminNav />
+
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {cards.map((card) => (

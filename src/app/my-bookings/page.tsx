@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { BookingCard } from '@/components/ui/BookingCard'
 import { cancelBooking } from '@/app/admin/actions'
+import { Navbar } from '@/components/ui/Navbar'
+import { MutationForm } from '@/components/ui/MutationForm'
 
 type BookingRow = {
   id: string
@@ -37,7 +39,9 @@ export default async function MyBookingsPage() {
     .returns<BookingRow[]>()
 
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen">
+      <Navbar />
+      <main id="main-content" tabIndex={-1}>
       <div className="page-shell max-w-5xl">
         <div className="page-header">
           <div>
@@ -74,7 +78,7 @@ export default async function MyBookingsPage() {
                 booking={booking}
                 actions={
                   ['pending', 'confirmed'].includes(booking.status) ? (
-                    <form action={cancelBooking}>
+                    <MutationForm action={cancelBooking} successMessage="ยกเลิกการจองแล้ว" confirmMessage="ต้องการยกเลิกการจองนี้ใช่หรือไม่?">
                       <input type="hidden" name="id" value={booking.id} />
                       <button
                         type="submit"
@@ -82,7 +86,7 @@ export default async function MyBookingsPage() {
                       >
                         ยกเลิกการจอง
                       </button>
-                    </form>
+                    </MutationForm>
                   ) : null
                 }
               />
@@ -90,6 +94,7 @@ export default async function MyBookingsPage() {
           </div>
         ) : null}
       </div>
-    </main>
+      </main>
+    </div>
   )
 }

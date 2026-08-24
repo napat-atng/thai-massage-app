@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CalendarDays, Clock3, MessageSquareText, Sparkles, UserRound } from 'lucide-react'
+import { CalendarDays, CheckCircle2, Clock3, MessageSquareText, Sparkles, UserRound } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { BUSINESS_HOURS } from '@/lib/constants'
+import Swal from 'sweetalert2'
 
 type ServiceOption = {
   id: string
@@ -64,6 +65,7 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
     : true
 
   const canSubmit = Boolean(selectedService && bookingDate && startTime && businessHoursOk)
+  const selectedStaff = staff.find((person) => person.id === staffId)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -86,9 +88,9 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
         )
 
       if (conflicts && conflicts.length > 0) {
-        setErrorMessage(
-          `ช่างนวดคนนี้ไม่ว่างในช่วงเวลา ${startTime}–${calculatedEndTime} น. กรุณาเลือกเวลาหรือช่างอื่น`
-        )
+        const message = `ช่างนวดคนนี้ไม่ว่างในช่วงเวลา ${startTime}–${calculatedEndTime} น. กรุณาเลือกเวลาหรือช่างอื่น`
+        setErrorMessage(message)
+        await Swal.fire({ icon: 'error', title: 'ไม่สามารถจองได้', text: message })
         setIsSubmitting(false)
         return
       }
@@ -109,9 +111,11 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
 
     if (error) {
       setErrorMessage(error.message)
+      await Swal.fire({ icon: 'error', title: 'บันทึกการจองไม่สำเร็จ', text: error.message })
       return
     }
 
+    await Swal.fire({ icon: 'success', title: 'จองสำเร็จ', text: 'ระบบบันทึกการจองของคุณแล้ว', timer: 1800, showConfirmButton: false })
     router.push('/my-bookings')
     router.refresh()
   }
@@ -205,7 +209,7 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
         </div>
 
         {selectedService && !businessHoursOk ? (
-          <p className="rounded-lg bg-orange-50 px-3 py-2 text-sm font-medium text-orange-800 ring-1 ring-orange-100">
+          <p className="rounded-xl bg-orange-50 px-3 py-2 text-sm font-medium text-orange-800 ring-1 ring-orange-100" role="alert">
             เวลาสิ้นสุด {endTime} น. เกินเวลาปิดร้าน {BUSINESS_HOURS.close} น. กรุณาเลือกเวลาเริ่มให้เร็วขึ้น
           </p>
         ) : null}
@@ -226,7 +230,7 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
         </div>
 
         {errorMessage ? (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 ring-1 ring-red-100">
+          <p className="rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 ring-1 ring-red-100" role="alert">
             {errorMessage}
           </p>
         ) : null}
@@ -238,6 +242,10 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
 
         {selectedService ? (
           <div className="mt-5 space-y-4">
+            <div className="flex items-start gap-2 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-900">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>ตรวจสอบรายละเอียดก่อนกดยืนยัน</span>
+            </div>
             <div className="soft-panel">
               <p className="text-sm text-stone-600">บริการ</p>
               <p className="mt-1 font-bold text-stone-950">{selectedService.name}</p>
@@ -251,6 +259,12 @@ export function BookingForm({ userId, services, staff }: BookingFormProps) {
                 <p className="text-stone-500">เสร็จ</p>
                 <p className="mt-1 font-semibold text-stone-900">{endTime ?? '-'}</p>
               </div>
+            </div>
+            <div className="rounded-xl bg-stone-50 p-3 text-sm">
+              <p className="text-stone-500">หมอนวด</p>
+              <p className="mt-1 font-semibold text-stone-900">
+                {selectedStaff ? `${selectedStaff.name}${selectedStaff.nickname ? ` (${selectedStaff.nickname})` : ''}` : 'ให้ร้านจัดหมอนวดที่ว่างให้'}
+              </p>
             </div>
             <div className="flex items-end justify-between border-t border-stone-100 pt-4">
               <span className="text-sm text-stone-500">รวมทั้งหมด</span>

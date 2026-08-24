@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { ALL_STATUSES, STATUS_LABEL } from '@/lib/constants'
 import { recordTransaction } from '@/app/admin/actions'
+import { MutationForm } from '@/components/ui/MutationForm'
 
 const PAGE_SIZE = 20
 
@@ -65,7 +66,7 @@ export default async function AdminBookingsPage({
       <div className="page-shell">
         <h1 className="mb-2 text-2xl font-bold text-stone-800">จัดการการจอง</h1>
         <p className="mb-6 text-sm text-stone-500">เปลี่ยนสถานะ มอบหมายหมอนวด และบันทึกการชำระเงิน</p>
-        <AdminNav />
+
 
         {/* ตัวกรอง */}
         <form method="get" className="card mb-6 flex flex-wrap items-end gap-3">
@@ -118,7 +119,7 @@ export default async function AdminBookingsPage({
               </div>
 
               {/* ฟอร์มอัปเดตสถานะ */}
-              <form action={updateBooking} className="grid gap-3 lg:grid-cols-[160px_1fr_1fr_100px] lg:items-end">
+              <MutationForm action={updateBooking} successMessage="อัปเดตการจองแล้ว" className="grid gap-3 lg:grid-cols-[160px_1fr_1fr_100px] lg:items-end">
                 <input type="hidden" name="id" value={booking.id} />
                 <div>
                   <label className="text-sm font-medium text-stone-700">สถานะ</label>
@@ -144,11 +145,11 @@ export default async function AdminBookingsPage({
                   <input name="note" defaultValue={booking.note ?? ''} className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2" />
                 </div>
                 <button type="submit" className="btn-primary text-sm">บันทึก</button>
-              </form>
+              </MutationForm>
 
               {/* ฟอร์มบันทึกการชำระเงิน (แสดงเมื่อสถานะไม่ใช่ completed/cancelled) */}
               {!['completed', 'cancelled'].includes(booking.status) ? (
-                <form action={recordTransaction} className="mt-3 flex flex-wrap items-end gap-3 border-t border-stone-100 pt-3">
+                <MutationForm action={recordTransaction} successMessage="บันทึกการชำระเงินแล้ว" className="mt-3 flex flex-wrap items-end gap-3 border-t border-stone-100 pt-3">
                   <input type="hidden" name="booking_id" value={booking.id} />
                   <input type="hidden" name="amount" value={booking.total_price} />
                   <div>
@@ -166,7 +167,7 @@ export default async function AdminBookingsPage({
                   <button type="submit" className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
                     บันทึกชำระเงิน ฿{Number(booking.total_price).toLocaleString()}
                   </button>
-                </form>
+                </MutationForm>
               ) : null}
             </article>
           ))}
