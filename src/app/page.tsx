@@ -26,7 +26,7 @@ export default async function HomePage() {
           <div>
             <p className="eyebrow">Thai Massage Booking</p>
             <h1 className="mt-4 max-w-2xl text-4xl font-bold leading-tight text-stone-950 md:text-5xl">
-              จองคิวนวดแผนไทยได้ง่าย ในบรรยากาศที่ดูแลคุณตั้งแต่ก่อนมาถึงร้าน
+              จองคิวนวดแผนไทย
             </h1>
             <p className="mt-5 max-w-xl text-base leading-7 text-stone-600 md:text-lg">
               เลือกบริการ เวลา และหมอนวดที่ต้องการ พร้อมติดตามสถานะการจองได้ในที่เดียว เหมาะทั้งลูกค้าประจำและผู้ที่มาครั้งแรก

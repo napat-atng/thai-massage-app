@@ -149,11 +149,40 @@ export async function updateBooking(formData: FormData): Promise<MutationResult>
     return { success: false, message: 'ข้อมูลการจองไม่ครบถ้วน' }
   }
 
-  const { error } = await supabase
-    .from('bookings')
-    .update({ status, staff_id: staffId, note, updated_at: new Date().toISOString() })
-    .eq('id', id)
+  const [{ data: booking, error: bookingError }, { count: paymentCount }] = await Promise.all([
+    supabase.from('bookings').select('status').eq('id', id).single(),
+    supabase.from('transactions').select('*', { count: 'exact', head: true }).eq('booking_id', id),
+  ])
 
+  if (bookingError || !booking) return { success: false, message: 'ไม่พบรายการจอง' }
+
+  // ห้ามแก้ไขถ้าจ่ายเงินแล้ว หรือยกเลิกแล้ว
+  if ((paymentCount ?? 0) > 0) return { success: false, message: 'รายการที่ชำระเงินแล้วไม่สามารถแก้ไขสถานะได้' }
+  if (booking.status === 'cancelled') return { success: false, message: 'รายการที่ยกเลิกแล้วไม่สามารถแก้ไขได้' }
+
+  // กำหนด transition ที่อนุญาต (เฉพาะ forward step, ไม่ใช่ cancelled — ใช้ cancelBookingAdmin แทน)
+  const allowedNext: Partial<Record<BookingStatus, BookingStatus>> = {
+    pending:   'confirmed',
+    confirmed: 'in_progress',
+  }
+
+  if (status !== allowedNext[booking.status as BookingStatus]) {
+    return { success: false, message: 'ไม่สามารถข้ามขั้นตอนสถานะการจองได้' }
+  }
+
+  // ต้องมีหมอนวดก่อนยืนยัน
+  if (booking.status === 'pending' && status === 'confirmed' && !staffId) {
+    return { success: false, message: 'กรุณามอบหมายหมอนวดก่อนยืนยันนัด' }
+  }
+
+  const updatePayload: Record<string, unknown> = {
+    status,
+    note,
+    updated_at: new Date().toISOString(),
+  }
+  if (staffId) updatePayload.staff_id = staffId
+
+  const { error } = await supabase.from('bookings').update(updatePayload).eq('id', id)
   if (error) return { success: false, message: error.message }
 
   revalidatePath('/admin/bookings')
@@ -161,6 +190,38 @@ export async function updateBooking(formData: FormData): Promise<MutationResult>
   revalidatePath('/my-bookings')
   revalidatePath('/staff/schedule')
   return { success: true, message: 'อัปเดตการจองแล้ว' }
+}
+
+/** Admin ยกเลิกการจอง (ทำได้เฉพาะ pending / confirmed เท่านั้น) */
+export async function cancelBookingAdmin(formData: FormData): Promise<MutationResult> {
+  await requireAdmin()
+  const supabase = createClient()
+  const id = textValue(formData, 'id')
+
+  if (!id) return { success: false, message: 'ไม่พบรายการจอง' }
+
+  const { data: booking, error: fetchError } = await supabase
+    .from('bookings')
+    .select('status')
+    .eq('id', id)
+    .single()
+
+  if (fetchError || !booking) return { success: false, message: 'ไม่พบรายการจอง' }
+  if (!['pending', 'confirmed'].includes(booking.status)) {
+    return { success: false, message: 'ยกเลิกได้เฉพาะการจองที่ยังไม่เริ่มบริการ' }
+  }
+
+  const { error } = await supabase
+    .from('bookings')
+    .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+    .eq('id', id)
+
+  if (error) return { success: false, message: error.message }
+
+  revalidatePath('/admin/bookings')
+  revalidatePath('/admin/dashboard')
+  revalidatePath('/my-bookings')
+  return { success: true, message: 'ยกเลิกการจองแล้ว' }
 }
 
 // ---- customer actions ----
@@ -247,6 +308,14 @@ export async function recordTransaction(formData: FormData): Promise<MutationRes
     return { success: false, message: 'ข้อมูลการชำระเงินไม่ครบถ้วน' }
   }
 
+  const [{ data: booking, error: bookingError }, { count: paymentCount }] = await Promise.all([
+    supabase.from('bookings').select('status').eq('id', booking_id).single(),
+    supabase.from('transactions').select('*', { count: 'exact', head: true }).eq('booking_id', booking_id),
+  ])
+  if (bookingError || !booking) return { success: false, message: 'ไม่พบรายการจอง' }
+  if ((paymentCount ?? 0) > 0) return { success: false, message: 'รายการนี้บันทึกการชำระเงินแล้ว' }
+  if (booking.status !== 'in_progress') return { success: false, message: 'บันทึกการชำระเงินได้หลังเริ่มให้บริการเท่านั้น' }
+
   const { error } = await supabase.from('transactions').insert({
     booking_id,
     amount,
@@ -258,12 +327,12 @@ export async function recordTransaction(formData: FormData): Promise<MutationRes
   if (error) return { success: false, message: error.message }
 
   // อัปเดตสถานะ booking เป็น completed
-  const { error: bookingError } = await supabase
+  const { error: completeBookingError } = await supabase
     .from('bookings')
     .update({ status: 'completed', updated_at: new Date().toISOString() })
     .eq('id', booking_id)
 
-  if (bookingError) return { success: false, message: `บันทึกการชำระเงินแล้ว แต่เปลี่ยนสถานะการจองไม่สำเร็จ: ${bookingError.message}` }
+  if (completeBookingError) return { success: false, message: `บันทึกการชำระเงินแล้ว แต่เปลี่ยนสถานะการจองไม่สำเร็จ: ${completeBookingError.message}` }
 
   revalidatePath('/admin/bookings')
   revalidatePath('/admin/reports')
